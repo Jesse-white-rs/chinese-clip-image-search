@@ -409,6 +409,12 @@ image_search/
 
 <div align="center">
 
+### ☕ 支持作者
+
+如果这个项目对你有帮助，欢迎打赏一杯咖啡。有问题也可以扫码加 QQ 联系。
+
+<img src="./docs/donate.jpg" alt="微信打赏 / QQ 联系" width="320" />
+
 **Made with ❤️ using Chinese-CLIP**
 
 模型版权归 [OFA-Sys/Chinese-CLIP](https://github.com/OFA-Sys/Chinese-CLIP) 所有（Apache 2.0）
