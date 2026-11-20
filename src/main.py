@@ -7,7 +7,10 @@ import time
 import shutil
 import tempfile
 import asyncio
+import threading
 import concurrent.futures
+import requests
+from requests.adapters import HTTPAdapter
 from contextlib import asynccontextmanager
 from typing import Optional, List
 from fastapi import FastAPI, File, UploadFile, Form, Query, Request, BackgroundTasks, Depends
@@ -44,10 +47,15 @@ MINIO_CLI = MinioHelper()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用启动时开启备份调度器，关闭时释放锁和调度器。"""
+    """应用启动/关闭钩子：调度器与延迟 flush 管理器的生命周期。"""
     backup.BACKUP_SCHEDULER.start()
-    yield
-    backup.BACKUP_SCHEDULER.shutdown()
+    MILVUS_CLI.flush_manager.start()
+    try:
+        yield
+    finally:
+        # 关闭时兜底 flush，确保未落盘的向量不丢失
+        MILVUS_CLI.flush_manager.shutdown()
+        backup.BACKUP_SCHEDULER.shutdown()
 
 
 # 创建 FastAPI 应用
@@ -59,6 +67,21 @@ if not os.path.exists(UPLOAD_PATH):
 
 # 用于异步下载远程图片的线程池（避免阻塞事件循环）
 _DOWNLOAD_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=16)
+
+# 线程本地复用的 HTTP Session：每个下载线程持有一个带连接池的 Session，
+# 避免每次 requests.get 新建 TCP 连接（三次握手 + TIME_WAIT 累积）。
+_thread_local = threading.local()
+
+
+def _get_http_session():
+    session = getattr(_thread_local, "session", None)
+    if session is None:
+        session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=16, pool_maxsize=16, max_retries=0)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        _thread_local.session = session
+    return session
 
 
 # ---------------------- 请求 / 响应模型 ----------------------
@@ -153,9 +176,8 @@ def fail(message):
 
 
 def _fetch_url(url):
-    """同步下载单张图片（在线程池中执行）。"""
-    import requests
-    resp = requests.get(url, timeout=30)
+    """同步下载单张图片（在线程池中执行），复用线程本地 Session 连接池。"""
+    resp = _get_http_session().get(url, timeout=30)
     return (resp.content, url) if resp.status_code == 200 else (None, url)
 
 
@@ -428,13 +450,14 @@ def read_log(name: str, lines: int = Query(200, ge=1, le=2000),
 
 # ---------------------- 1. 健康检查 ----------------------
 @app.get("/api/v1/health")
-def health(user=Depends(get_current_user)):
+def health():
     """返回模型及各依赖服务的连通状态。"""
     data = {
         "model": MODEL.health(),
         "milvus": MILVUS_CLI.health(),
         "mysql": MYSQL_CLI.health(),
         "minio": MINIO_CLI.health(),
+        "flush": MILVUS_CLI.flush_manager.stats(),  # 延迟 flush 监控指标
     }
     healthy = data["model"]["ready"] and all([data["milvus"], data["mysql"], data["minio"]])
     return ok("健康" if healthy else "部分服务不可用", data)

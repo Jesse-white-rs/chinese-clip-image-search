@@ -89,6 +89,8 @@ services:
           OMP_NUM_THREADS: '1'
           MKL_NUM_THREADS: '1'
           INFER_CONCURRENCY: '6'
+          MALLOC_ARENA_MAX: '4'
+          PYTHONMALLOC: 'malloc'
           BACKUP_RETENTION_DAYS: '30'
         volumes:
           - ./data:/data

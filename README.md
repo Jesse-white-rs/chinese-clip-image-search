@@ -266,6 +266,9 @@ $env:BACKUP_RETENTION_DAYS="30"
 | `MODEL_DIR` | `<项目根>/ai-model` | 模型权重目录 |
 | `NLIST` / `NPROBE` | `1024` / `16` | IVF_FLAT 索引参数 |
 | `INFER_CONCURRENCY` | 见启动脚本 | 单 worker 并发推理数，与 worker 数**相乘**决定总并发 |
+| `FLUSH_MODE` | `async` | 单张上传 flush 模式：`async` 延迟批量 / `sync` 逐张立即 |
+| `FLUSH_THRESHOLD` | `100` | async 模式累计多少张触发一次 flush |
+| `FLUSH_INTERVAL` | `2` | async 模式最长多少秒触发一次 flush |
 | `MYSQL_PING_INTERVAL` | `30` | MySQL 探活间隔（秒） |
 | `JWT_SECRET` | 内置默认 | JWT 签名密钥，生产环境必须改 |
 | `ADMIN_USER` / `ADMIN_PASSWORD` | `admin` / 环境变量设置 | 初始管理员，务必通过环境变量设置密码 |
@@ -273,6 +276,16 @@ $env:BACKUP_RETENTION_DAYS="30"
 | `BACKUP_RETENTION_DAYS` | `30` | 备份文件保留天数 |
 
 > **性能调参**：总并发推理路数 = `WORKERS × INFER_CONCURRENCY`。23 核机器推荐 `4 × 6 ≈ 24`，让并发与核数匹配；不要按核数单独调高 worker（会加载多份模型且总并发远超核数，P95 长尾变差）。用后台「性能检测」页压测 `search_image`/`search_text` 场景，观察 QPS/P95 并用 `top` 看 CPU 是否吃满。
+>
+> **内存调优**：启动脚本已设 `MALLOC_ARENA_MAX=4` + `PYTHONMALLOC=malloc`，用于抑制 glibc 多线程 arena
+> 导致的 RSS 虚高（23 核机器默认 arena 可达上百个，每个都缓存已释放内存不归还 OS）。
+> 若循环上传单张图片后 RSS 只涨不降，多半是内存池行为而非真泄漏——这些环境变量能显著压低 RSS。
+>
+> **单张上传吞吐优化**：默认启用延迟 flush（`FLUSH_MODE=async`）——不再每张图都 `collection.flush()`，
+> 而是累计 `FLUSH_THRESHOLD`（默认 100）张或每 `FLUSH_INTERVAL`（默认 2 秒）统一 flush 一次，
+> 吞吐可提升 5~20 倍。代价是**新上传图片最长 2 秒内不可检索**；服务关闭时自动兜底 flush 保证不丢数据。
+> 若需"上传即可搜"，设 `FLUSH_MODE=sync` 切回逐张 flush。此外 MinIO 上传与模型推理已并行、
+> URL 下载复用连接池。`health` 接口的 `data.flush` 可观察待 flush 数与累计次数。
 
 ---
 
@@ -364,6 +377,7 @@ image_search/
 │   ├── auth.py               # 认证与用户管理（JWT/bcrypt）
 │   ├── clip_model.py         # Chinese-CLIP 模型单例与特征编码
 │   ├── milvus_helpers.py     # 向量库操作（集合/load 缓存）
+│   ├── flush_manager.py      # 延迟 flush 管理器（阈值/定时/兜底）
 │   ├── mysql_helpers.py      # MySQL 映射表操作（ping 节流）
 │   ├── minio_helpers.py      # MinIO 对象存储操作
 │   ├── log_reader.py         # 日志读取

@@ -54,6 +54,8 @@ docker run -d \
   -e OMP_NUM_THREADS=1 \
   -e MKL_NUM_THREADS=1 \
   -e INFER_CONCURRENCY="${INFER_CONCURRENCY:-6}" \
+  -e MALLOC_ARENA_MAX=4 \
+  -e PYTHONMALLOC=malloc \
   -e JWT_SECRET="${JWT_SECRET:-请修改为随机长字符串}" \
   -e ADMIN_USER="${ADMIN_USER:-admin}" \
   -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-请修改为强密码}" \

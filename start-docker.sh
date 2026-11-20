@@ -14,10 +14,10 @@ PORT="5005"
 WORKERS="4"                        # uvicorn worker 数：每个进程各加载 1 份模型，按 CPU 核数/内存调整
 
 # 依赖服务地址与凭据：优先读环境变量，未设置时用占位符，请按实际情况修改
-MILVUS_HOST="${MILVUS_HOST:-192.168.1.10}"
-MYSQL_HOST="${MYSQL_HOST:-192.168.1.10}"
-MINIO_HOST="${MINIO_HOST:-192.168.1.10}"
-MYSQL_PWD="${MYSQL_PWD:-请修改为MySQL密码}"
+MILVUS_HOST="${MILVUS_HOST:-192.168.255.141}"
+MYSQL_HOST="${MYSQL_HOST:-192.168.255.141}"
+MINIO_HOST="${MINIO_HOST:-192.168.255.141}"
+MYSQL_PWD="${MYSQL_PWD:-194044}"
 
 # 国内 pip 镜像
 PIP_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
@@ -101,6 +101,8 @@ docker run -d \
   -e OMP_NUM_THREADS=1 \
   -e MKL_NUM_THREADS=1 \
   -e INFER_CONCURRENCY="${INFER_CONCURRENCY:-6}" \
+  -e MALLOC_ARENA_MAX=4 \
+  -e PYTHONMALLOC=malloc \
   -e JWT_SECRET="${JWT_SECRET:-请修改为随机长字符串}" \
   -e ADMIN_USER="${ADMIN_USER:-admin}" \
   -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-请修改为强密码}" \

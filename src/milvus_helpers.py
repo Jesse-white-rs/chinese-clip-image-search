@@ -6,6 +6,7 @@ import threading
 from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Collection, utility
 from config import MILVUS_HOST, MILVUS_PORT, VECTOR_DIMENSION, METRIC_TYPE, NLIST, NPROBE
 from logs import LOGGER
+from flush_manager import FlushManager
 
 
 class MilvusHelper:
@@ -23,6 +24,8 @@ class MilvusHelper:
         self._loaded = set()         # 已加载到内存的集合名
         self._existing = set()       # 已确认存在的集合名
         self._lock = threading.RLock()
+        # 延迟 flush 管理器：把单张上传的逐张 flush 合并为批量 flush
+        self.flush_manager = FlushManager(self)
         self.test_connection()
 
     def test_connection(self):
@@ -114,10 +117,12 @@ class MilvusHelper:
             LOGGER.error(f"读取集合主键模式失败: {e}")
             return None
 
-    def insert(self, name, vectors, ids=None, batch_size=1000, flush=True):
+    def insert(self, name, vectors, ids=None, batch_size=1000, flush=True, defer_flush=False):
         """向量入库。ids 不为空时按指定 ID 写入，返回主键列表。
 
-        flush 默认开启保证可检索；批量导入场景可传 flush=False，最后由调用方统一 flush。
+        - flush=False：完全不 flush，由调用方负责（批量导入场景）。
+        - defer_flush=True：交给 FlushManager 延迟批量 flush（单张上传高吞吐场景）。
+        - 两者都为 False 之外的默认：立即 flush（上传即可搜）。
         """
         try:
             collection = self._get_collection(name)
@@ -130,8 +135,12 @@ class MilvusHelper:
                     batch_ids = [int(i) for i in ids[start:start + batch_size]]
                     result = collection.insert([batch_ids, batch_vecs])
                 primary_keys.extend(result.primary_keys)
-            if flush and primary_keys:
-                collection.flush()
+            if primary_keys:
+                if defer_flush:
+                    # 累计计数，达阈值/定时由 FlushManager 统一 flush
+                    self.flush_manager.note(name)
+                elif flush:
+                    collection.flush()
             return primary_keys
         except Exception as e:
             LOGGER.error(f"向量入库失败: {e}")

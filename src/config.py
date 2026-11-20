@@ -16,6 +16,12 @@ TOP_K = int(os.getenv("TOP_K", "10"))
 # IVF_FLAT 索引聚类数与检索时的探测簇数
 NLIST = int(os.getenv("NLIST", "1024"))
 NPROBE = int(os.getenv("NPROBE", "16"))
+# 单张上传的延迟 flush：累计 FLUSH_THRESHOLD 张或每 FLUSH_INTERVAL 秒统一 flush 一次，
+# 替代每张都 flush（flush 是重量级落盘操作）。代价：新图片最长 FLUSH_INTERVAL 秒内不可检索。
+FLUSH_THRESHOLD = int(os.getenv("FLUSH_THRESHOLD", "100"))
+FLUSH_INTERVAL = float(os.getenv("FLUSH_INTERVAL", "2"))
+# flush 模式：async=延迟批量 flush（高吞吐，默认）；sync=每张立即 flush（上传即可搜）
+FLUSH_MODE = os.getenv("FLUSH_MODE", "async").lower()
 
 ############### MySQL 配置 ###############
 MYSQL_HOST = os.getenv("MYSQL_HOST", "192.168.1.10")

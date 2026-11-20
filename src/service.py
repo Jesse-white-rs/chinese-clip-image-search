@@ -22,6 +22,9 @@ RESULT_CHUNK_SIZE = 1000
 _STREAM_TMP = os.path.join(UPLOAD_PATH, "_batch_stream")
 # 下载线程池：仅在后台任务里按块使用，并发数固定，避免整批并发下载
 _DOWNLOAD_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=16)
+# 单张入库流水线池：并行执行 MinIO 上传（网络 I/O）与模型推理（CPU）
+_PIPE_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=16,
+                                                   thread_name_prefix="upload-pipe")
 
 
 def _fetch_one(url):
@@ -305,13 +308,23 @@ def _write_one(table_name, image_bytes, model, milvus_cli, mysql_cli, minio_cli,
     started = time.perf_counter()
     source = "url" if raw_url and (raw_url.startswith("http://") or raw_url.startswith("https://")) else "file"
     try:
+        # MinIO 上传（网络 I/O）与模型推理（CPU）无依赖，并行执行以缩短单张耗时。
+        # 不落 MinIO 时直接推理，省掉线程池开销。
         object_name = None
         if save_to_minio:
-            object_name, _ = minio_cli.upload_image(image_bytes, table_name, _suffix(raw_url))
+            fut_upload = _PIPE_POOL.submit(
+                minio_cli.upload_image, image_bytes, table_name, _suffix(raw_url)
+            )
+        fut_vector = _PIPE_POOL.submit(model.encode_image, image_bytes)
+        vector = fut_vector.result()                       # 等推理完成
+        if save_to_minio:
+            object_name, _ = fut_upload.result()           # 等上传完成
 
-        vector = model.encode_image(image_bytes)
         ids = None if milvus_id is None else [int(milvus_id)]
-        primary_keys = milvus_cli.insert(table_name, [vector], ids=ids)
+        # 单张走延迟 flush：由 FlushManager 按阈值/间隔批量落盘，避免每张都 flush
+        primary_keys = milvus_cli.insert(
+            table_name, [vector], ids=ids, defer_flush=True
+        )
         if not primary_keys:
             audit.log_upload(table_name, source, raw_url, commodity_id, customs_param,
                              save_to_minio, None, object_name, False,
