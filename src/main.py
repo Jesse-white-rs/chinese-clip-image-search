@@ -139,6 +139,7 @@ class PerfTaskRequest(BaseModel):
     total: int = 1000
     concurrency: int = 8
     query_text: str = "红色物体"
+    batch_size: int = 500  # batch_upload 场景每批图片数
 
 
 def ok(message="success", data=None):
@@ -272,11 +273,13 @@ def create_perf_task(item: PerfTaskRequest, background_tasks: BackgroundTasks,
         return fail("请求数需在 1 ~ 2,000,000 之间")
     if item.concurrency < 1 or item.concurrency > 256:
         return fail("并发数需在 1 ~ 256 之间")
+    if item.batch_size < 1 or item.batch_size > 5000:
+        return fail("每批图片数需在 1 ~ 5000 之间")
     task_id = uuid.uuid4().hex
     background_tasks.add_task(
         perf.run_perf, task_id, item.scenario, item.table_name.strip(),
         item.total, item.concurrency, MODEL, MILVUS_CLI, MYSQL_CLI, MINIO_CLI,
-        item.query_text,
+        item.query_text, item.batch_size,
     )
     return ok("压测任务已启动", {"taskId": task_id, "total": item.total})
 

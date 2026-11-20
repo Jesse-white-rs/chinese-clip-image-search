@@ -17,6 +17,10 @@ export interface PerfResult {
   p99Ms: number
   success: number
   failed: number
+  batchSize?: number
+  images?: number
+  imagesPerSec?: number
+  avgMsPerImage?: number
   errors?: string[]
   status: string
   createdAt?: string
@@ -36,7 +40,8 @@ export interface PerfProgress {
 
 export const perfApi = {
   start(data: {
-    scenario: string; table_name: string; total: number; concurrency: number; query_text?: string;
+    scenario: string; table_name: string; total: number; concurrency: number
+    query_text?: string; batch_size?: number
   }): Promise<{ taskId: string; total: number }> {
     return request.post('/perf/tasks', data)
   },

@@ -215,7 +215,7 @@ npm run dev
 | 日志 | `GET /logs` · `GET /logs/{name}?lines=200&level=ERROR` |
 | 备份任务 | `GET/POST /backups/tasks` · `PUT/DELETE /backups/tasks/{id}` · `POST /backups/tasks/{id}/run` |
 | 备份记录 | `GET /backups/history` · `GET/DELETE /backups/files/{name}` · `GET /backups/files/{name}/download` |
-| 压测 | `POST /perf/tasks` · `GET /perf/tasks/{id}/progress` · `GET /perf/tasks/{id}/result` · `GET/DELETE /perf/results` |
+| 压测 | `POST /perf/tasks`（`scenario=batch_upload` 时带 `batch_size`）· `GET /perf/tasks/{id}/progress` · `GET /perf/tasks/{id}/result` · `GET/DELETE /perf/results` |
 
 </details>
 
@@ -401,7 +401,10 @@ image_search/
 11. **定时任务没执行**：确认任务启用、cron 正确；多 worker 时只有一个进程持锁，用「执行历史」确认。
 12. **备份文件很大**：300 万图片向量约 12GB，备份耗时较长；原图默认不打包。
 13. **循环调单张上传内存上涨**：已修复（pymilvus 重复 `connect()` 泄漏 gRPC 连接，现已加连接节流）。大批量入库建议改用批量接口或目录导入。
-14. **性能压测**：后台「性能检测」页配置场景/量级/并发，服务端执行，关闭页面不影响；上传场景十万级以上有确认提示。
+14. **性能压测**：后台「性能检测」页支持单张上传、批量上传、以图搜图、文本搜图四种场景，
+    服务端执行，关闭页面不影响；上传场景按预计写入图片数提示。
+    **批量上传压测**：`scenario=batch_upload`，`total` 为批数，`batch_size` 为每批张数（默认 500，可配），
+    结果含 QPS（批/秒）、图片吞吐（张/秒）、每张平均耗时；实际写入图片数 = `total × batch_size`。
 
 </details>
 

@@ -25,7 +25,7 @@ import service
 
 _TASK_CACHE = Cache("./tmp/perf")
 
-SCENARIOS = ("upload", "search_image", "search_text")
+SCENARIOS = ("upload", "batch_upload", "search_image", "search_text")
 
 
 class PerfStore:
@@ -65,6 +65,8 @@ class PerfStore:
                 "total INT, concurrency INT, duration DOUBLE, qps DOUBLE, "
                 "avg_ms DOUBLE, p50_ms DOUBLE, p90_ms DOUBLE, p95_ms DOUBLE, p99_ms DOUBLE, "
                 "success INT, failed INT, status VARCHAR(16), errors TEXT, "
+                "batch_size INT DEFAULT 0, images INT DEFAULT 0, "
+                "images_per_sec DOUBLE DEFAULT 0, avg_ms_per_image DOUBLE DEFAULT 0, "
                 "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                 "finished_at DATETIME DEFAULT NULL"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
@@ -74,6 +76,10 @@ class PerfStore:
                 ("query_text", "ALTER TABLE perf_results ADD COLUMN query_text VARCHAR(255) AFTER table_name"),
                 ("errors", "ALTER TABLE perf_results ADD COLUMN errors TEXT AFTER status"),
                 ("finished_at", "ALTER TABLE perf_results ADD COLUMN finished_at DATETIME AFTER created_at"),
+                ("batch_size", "ALTER TABLE perf_results ADD COLUMN batch_size INT DEFAULT 0 AFTER failed"),
+                ("images", "ALTER TABLE perf_results ADD COLUMN images INT DEFAULT 0 AFTER batch_size"),
+                ("images_per_sec", "ALTER TABLE perf_results ADD COLUMN images_per_sec DOUBLE DEFAULT 0 AFTER images"),
+                ("avg_ms_per_image", "ALTER TABLE perf_results ADD COLUMN avg_ms_per_image DOUBLE DEFAULT 0 AFTER images_per_sec"),
             ):
                 self.cursor.execute(f"SHOW COLUMNS FROM perf_results LIKE '{col}'")
                 if not self.cursor.fetchone():
@@ -85,15 +91,15 @@ class PerfStore:
             LOGGER.error(f"初始化压测结果表失败: {e}")
             raise
 
-    def start_record(self, task_id, scenario, table_name, total, concurrency, query_text=""):
+    def start_record(self, task_id, scenario, table_name, total, concurrency, query_text="", batch_size=0):
         """压测开始时即写入一条 running 记录，保证中断也能追溯。"""
         self._ensure_conn()
         with self._lock:
             self.cursor.execute(
                 "INSERT IGNORE INTO perf_results "
-                "(id,scenario,table_name,query_text,total,concurrency,status) "
-                "VALUES (%s,%s,%s,%s,%s,%s,'running')",
-                (task_id, scenario, table_name, query_text or "", total, concurrency),
+                "(id,scenario,table_name,query_text,total,concurrency,batch_size,status) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,'running')",
+                (task_id, scenario, table_name, query_text or "", total, concurrency, batch_size),
             )
 
     def finish_record(self, data):
@@ -105,11 +111,14 @@ class PerfStore:
             self.cursor.execute(
                 "UPDATE perf_results SET "
                 "duration=%s,qps=%s,avg_ms=%s,p50_ms=%s,p90_ms=%s,p95_ms=%s,p99_ms=%s,"
-                "success=%s,failed=%s,status=%s,errors=%s,finished_at=NOW() "
+                "success=%s,failed=%s,batch_size=%s,images=%s,images_per_sec=%s,avg_ms_per_image=%s,"
+                "status=%s,errors=%s,finished_at=NOW() "
                 "WHERE id=%s",
                 (data["duration"], data["qps"], data["avgMs"], data["p50Ms"],
                  data["p90Ms"], data["p95Ms"], data["p99Ms"], data["success"],
-                 data["failed"], data["status"], errors, data["taskId"]),
+                 data["failed"], data.get("batchSize", 0), data.get("images", 0),
+                 data.get("imagesPerSec", 0), data.get("avgMsPerImage", 0),
+                 data["status"], errors, data["taskId"]),
             )
 
     def get_result(self, task_id):
@@ -120,7 +129,8 @@ class PerfStore:
             self.cursor.execute(
                 "SELECT id,scenario,table_name,query_text,total,concurrency,duration,qps,"
                 "avg_ms,p50_ms,p90_ms,p95_ms,p99_ms,success,failed,status,errors,"
-                "created_at,finished_at FROM perf_results WHERE id=%s", (task_id,)
+                "created_at,finished_at,batch_size,images,images_per_sec,avg_ms_per_image "
+                "FROM perf_results WHERE id=%s", (task_id,)
             )
             row = self.cursor.fetchone()
         if not row:
@@ -139,6 +149,8 @@ class PerfStore:
             "status": row[15], "errors": errors,
             "createdAt": str(row[17]) if row[17] else None,
             "finishedAt": str(row[18]) if row[18] else None,
+            "batchSize": row[19] or 0, "images": row[20] or 0,
+            "imagesPerSec": round(row[21] or 0, 1), "avgMsPerImage": round(row[22] or 0, 2),
         }
 
     def list_results(self, limit=50):
@@ -146,7 +158,8 @@ class PerfStore:
         with self._lock:
             self.cursor.execute(
                 "SELECT id,scenario,table_name,query_text,total,concurrency,duration,qps,"
-                "avg_ms,p50_ms,p90_ms,p95_ms,p99_ms,success,failed,status,created_at,finished_at "
+                "avg_ms,p50_ms,p90_ms,p95_ms,p99_ms,success,failed,status,created_at,finished_at,"
+                "batch_size,images,images_per_sec,avg_ms_per_image "
                 "FROM perf_results ORDER BY created_at DESC LIMIT %s", (int(limit),)
             )
             rows = self.cursor.fetchall()
@@ -159,6 +172,8 @@ class PerfStore:
             "p99Ms": round(r[12] or 0, 2), "success": r[13], "failed": r[14],
             "status": r[15], "createdAt": str(r[16]) if r[16] else None,
             "finishedAt": str(r[17]) if r[17] else None,
+            "batchSize": r[18] or 0, "images": r[19] or 0,
+            "imagesPerSec": round(r[20] or 0, 1), "avgMsPerImage": round(r[21] or 0, 2),
         } for r in rows]
 
     def delete_result(self, task_id):
@@ -207,8 +222,12 @@ def _make_test_image():
 
 
 def run_perf(task_id, scenario, table_name, total, concurrency, model,
-             milvus_cli, mysql_cli, minio_cli, query_text="红色物体"):
-    """执行一次压测。total 为总请求数，concurrency 为并发数。"""
+             milvus_cli, mysql_cli, minio_cli, query_text="红色物体", batch_size=500):
+    """执行一次压测。total 为总请求数，concurrency 为并发数。
+
+    batch_upload 场景：每次请求提交 batch_size 张图，total 表示请求批数；
+    统计 QPS（批/秒）与图片吞吐（张/秒）。
+    """
     _TASK_CACHE.set(f"{task_id}:scenario", scenario)
     _TASK_CACHE.set(f"{task_id}:total", total)
     _TASK_CACHE.set(f"{task_id}:current", 0)
@@ -217,7 +236,8 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
     _TASK_CACHE.set(f"{task_id}:status", "running")
     # 开始即写库，保证中断也能追溯
     try:
-        PERF_STORE.start_record(task_id, scenario, table_name, total, concurrency, query_text)
+        PERF_STORE.start_record(task_id, scenario, table_name, total, concurrency,
+                                query_text, batch_size if scenario == "batch_upload" else 0)
     except Exception as e:
         LOGGER.error(f"写压测开始记录失败: {e}")
 
@@ -226,6 +246,7 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
     done = [0]
     success = [0]
     failed = [0]
+    images_done = [0]       # batch_upload 场景累计成功写入的图片数
     errors = []
 
     # 预生成测试图片，避免每次循环都编码图片
@@ -233,6 +254,7 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
 
     def one_op():
         start = time.perf_counter()
+        batch_ok = 0
         try:
             if scenario == "upload":
                 service.add_image(
@@ -240,6 +262,20 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
                     commodity_id=f"perf_{uuid.uuid4().hex[:8]}",
                     raw_url=f"perf_{uuid.uuid4().hex}.jpg", save_to_minio=False,
                 )
+                batch_ok = 1
+            elif scenario == "batch_upload":
+                # 一批 batch_size 张，走真实批量入库（流式分块 + 批量提特征/写库）
+                items = [{
+                    "image_bytes": test_image,
+                    "commodity_id": f"perf_{uuid.uuid4().hex[:8]}",
+                    "customs_param": None,
+                    "raw_url": f"perf_batch_{uuid.uuid4().hex}.jpg",
+                    "save_to_minio": False,
+                } for _ in range(batch_size)]
+                s, f, _ = service.add_images_batch(
+                    table_name, items, model, milvus_cli, mysql_cli, minio_cli
+                )
+                batch_ok = s
             elif scenario == "search_image":
                 service.search_by_image_lite(table_name, test_image, 10, model, milvus_cli)
             elif scenario == "search_text":
@@ -258,6 +294,8 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
                 success[0] += 1
             else:
                 failed[0] += 1
+            if scenario == "batch_upload":
+                images_done[0] += batch_ok
             # 每 100 次更新一次进度，减少 diskcache 写入开销
             if done[0] % max(100, total // 100) == 0 or done[0] == total:
                 _TASK_CACHE.set(f"{task_id}:current", done[0])
@@ -276,6 +314,16 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
                 service.add_image(table_name, test_image, model, milvus_cli, mysql_cli,
                                   minio_cli, commodity_id="perf_warmup",
                                   raw_url=f"warmup_{uuid.uuid4().hex}.jpg", save_to_minio=False)
+            elif scenario == "batch_upload":
+                warm_items = [{
+                    "image_bytes": test_image,
+                    "commodity_id": "perf_warmup",
+                    "customs_param": None,
+                    "raw_url": f"warmup_{uuid.uuid4().hex}.jpg",
+                    "save_to_minio": False,
+                } for _ in range(min(batch_size, 10))]
+                service.add_images_batch(table_name, warm_items, model, milvus_cli,
+                                         mysql_cli, minio_cli)
             elif scenario == "search_image":
                 service.search_by_image_lite(table_name, test_image, 10, model, milvus_cli)
             elif scenario == "search_text":
@@ -322,6 +370,11 @@ def run_perf(task_id, scenario, table_name, total, concurrency, model,
         "p99Ms": round(_percentile(arr, 99), 2),
         "success": success[0],
         "failed": failed[0],
+        "batchSize": batch_size if scenario == "batch_upload" else 0,
+        "images": images_done[0],
+        "imagesPerSec": round(images_done[0] / duration, 1) if duration > 0 else 0,
+        "avgMsPerImage": round((sum(latencies) / images_done[0]), 2)
+                         if images_done[0] > 0 else 0,
         "errors": errors,
         "status": "done",
     }

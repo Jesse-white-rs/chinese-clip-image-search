@@ -53,9 +53,16 @@
           <input v-model="form.query_text" class="input" placeholder="红色物体" />
         </div>
 
-        <div v-if="form.scenario === 'upload'" class="warning-box">
+        <div v-if="form.scenario === 'batch_upload'" class="form-item">
+          <label class="label">每批图片数：{{ form.batch_size }}</label>
+          <input v-model.number="form.batch_size" type="range" min="1" max="5000" step="1" class="range" />
+          <div class="range-marks"><span>1</span><span>1000</span><span>2500</span><span>5000</span></div>
+          <p class="hint-text">total 表示请求的批数，实际写入图片数 = total × 每批图片数</p>
+        </div>
+
+        <div v-if="form.scenario === 'upload' || form.scenario === 'batch_upload'" class="warning-box">
           <span class="warning-icon">⚠</span>
-          <div><b>注意：</b>上传压测会真实写入向量与映射记录，{{ form.total >= 100000 ? '当前为十万级以上，将产生大量数据，请谨慎执行！' : '请确认图库与磁盘空间充足。' }}</div>
+          <div><b>注意：</b>上传压测会真实写入向量与映射记录，{{ writeCount >= 100000 ? `当前将写入约 ${writeCount.toLocaleString()} 张，数据量巨大，请谨慎执行！` : `预计写入约 ${writeCount.toLocaleString()} 张，请确认图库与磁盘空间充足。` }}</div>
         </div>
 
         <button class="btn btn-primary start-btn" @click="startTest" :disabled="running || !form.table_name">
@@ -105,11 +112,21 @@
             <div class="metric-grid">
               <div class="metric primary">
                 <div class="metric-value">{{ result.qps.toLocaleString() }}</div>
-                <div class="metric-label">QPS（每秒请求）</div>
+                <div class="metric-label">{{ result.scenario === 'batch_upload' ? 'QPS（批/秒）' : 'QPS（每秒请求）' }}</div>
               </div>
+              <template v-if="result.scenario === 'batch_upload'">
+                <div class="metric primary">
+                  <div class="metric-value">{{ (result.imagesPerSec || 0).toLocaleString() }}</div>
+                  <div class="metric-label">图片吞吐（张/秒）</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-value">{{ result.avgMsPerImage || 0 }}<small>ms</small></div>
+                  <div class="metric-label">每张平均耗时</div>
+                </div>
+              </template>
               <div class="metric">
                 <div class="metric-value">{{ result.avgMs }}<small>ms</small></div>
-                <div class="metric-label">平均延迟</div>
+                <div class="metric-label">{{ result.scenario === 'batch_upload' ? '每批平均延迟' : '平均延迟' }}</div>
               </div>
               <div class="metric">
                 <div class="metric-value">{{ result.p95Ms }}<small>ms</small></div>
@@ -133,10 +150,14 @@
 
             <!-- 详情 -->
             <div class="detail-grid">
-              <div><span>总请求</span><b>{{ result.total.toLocaleString() }}</b></div>
+              <div><span>总请求</span><b>{{ result.total.toLocaleString() }}{{ result.scenario === 'batch_upload' ? ' 批' : '' }}</b></div>
               <div><span>成功</span><b class="ok-text">{{ result.success.toLocaleString() }}</b></div>
               <div><span>失败</span><b class="err-text">{{ result.failed.toLocaleString() }}</b></div>
               <div><span>总耗时</span><b>{{ result.duration }}s</b></div>
+              <template v-if="result.scenario === 'batch_upload'">
+                <div><span>每批张数</span><b>{{ result.batchSize }}</b></div>
+                <div><span>写入图片</span><b class="accent-text">{{ (result.images || 0).toLocaleString() }} 张</b></div>
+              </template>
             </div>
 
             <div v-if="result.errors && result.errors.length" class="errors-box">
@@ -156,7 +177,7 @@
       </div>
       <div v-if="history.length === 0" class="empty">暂无历史记录</div>
       <table v-else class="table">
-        <thead><tr><th>场景</th><th>图库</th><th>查询文本</th><th>请求数</th><th>并发</th><th>QPS</th><th>平均</th><th>P95</th><th>结果</th><th>时间</th><th></th></tr></thead>
+        <thead><tr><th>场景</th><th>图库</th><th>查询文本</th><th>请求数</th><th>并发</th><th>QPS</th><th>吞吐</th><th>平均</th><th>P95</th><th>结果</th><th>时间</th><th></th></tr></thead>
         <tbody>
           <tr v-for="h in history" :key="h.taskId">
             <td>{{ scenarioLabel(h.scenario) }}</td>
@@ -165,6 +186,7 @@
             <td>{{ h.total.toLocaleString() }}</td>
             <td>{{ h.concurrency }}</td>
             <td class="accent-text">{{ h.qps }}</td>
+            <td>{{ h.scenario === 'batch_upload' ? (h.imagesPerSec || 0).toLocaleString() + ' 张/s' : '-' }}</td>
             <td>{{ h.avgMs }}ms</td>
             <td>{{ h.p95Ms }}ms</td>
             <td>
@@ -187,7 +209,8 @@ import { perfApi, type PerfResult, type PerfProgress } from '@/api/perf'
 import { searchApi } from '@/api/search'
 
 const scenarios = [
-  { value: 'upload', label: '图片上传', icon: '↑', desc: '测入库吞吐' },
+  { value: 'upload', label: '单张上传', icon: '↑', desc: '测单张入库吞吐' },
+  { value: 'batch_upload', label: '批量上传', icon: '⇪', desc: '测批量入库吞吐（张/秒）' },
   { value: 'search_image', label: '以图搜图', icon: '⌕', desc: '测图像检索' },
   { value: 'search_text', label: '文本搜图', icon: '⌨', desc: '测中文检索' },
 ]
@@ -200,7 +223,7 @@ const presets = [
 
 const form = ref({
   scenario: 'search_image', table_name: '', total: 1000,
-  concurrency: 8, query_text: '红色物体',
+  concurrency: 8, query_text: '红色物体', batch_size: 500,
 })
 const tables = ref<{ name: string; count: number }[]>([])
 const taskId = ref('')
@@ -214,6 +237,12 @@ let timer: number | undefined
 
 const progressPct = computed(() =>
   progress.value.total ? Math.round(progress.value.current / progress.value.total * 100) : 0
+)
+// 预计写入图片数：批量场景 = 批数 × 每批张数
+const writeCount = computed(() =>
+  form.value.scenario === 'batch_upload'
+    ? form.value.total * form.value.batch_size
+    : form.value.total
 )
 const percentileBars = computed(() => {
   if (!result.value) return []
@@ -231,7 +260,10 @@ function statusLabel(s: string) {
   return { pending: '等待中', running: '进行中', done: '已完成' }[s] || s
 }
 function scenarioLabel(s: string) {
-  return { upload: '图片上传', search_image: '以图搜图', search_text: '文本搜图' }[s] || s
+  return {
+    upload: '单张上传', batch_upload: '批量上传',
+    search_image: '以图搜图', search_text: '文本搜图',
+  }[s] || s
 }
 
 async function loadTables() {
@@ -243,8 +275,8 @@ async function loadHistory() {
 
 async function startTest() {
   if (!form.value.table_name) return
-  if (form.value.scenario === 'upload' && form.value.total >= 100000) {
-    if (!confirm(`即将执行 ${form.value.total.toLocaleString()} 次上传压测，会写入大量数据。确定继续？`)) return
+  if ((form.value.scenario === 'upload' || form.value.scenario === 'batch_upload') && writeCount.value >= 100000) {
+    if (!confirm(`即将执行上传压测，预计写入 ${writeCount.value.toLocaleString()} 张图片，会写入大量数据。确定继续？`)) return
   }
   running.value = true
   result.value = null
@@ -252,7 +284,7 @@ async function startTest() {
     const res = await perfApi.start({
       scenario: form.value.scenario, table_name: form.value.table_name,
       total: form.value.total, concurrency: form.value.concurrency,
-      query_text: form.value.query_text,
+      query_text: form.value.query_text, batch_size: form.value.batch_size,
     })
     taskId.value = res.taskId
     progress.value = {
@@ -326,6 +358,7 @@ onUnmounted(() => clearInterval(timer))
 
 .range { width: 100%; accent-color: var(--accent); }
 .range-marks { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-top: 4px; }
+.hint-text { font-size: 11px; color: var(--text-3); margin: 6px 0 0; }
 .warning-box {
   display: flex; gap: 10px; padding: 12px 14px; margin-bottom: 16px;
   font-size: 12px; line-height: 1.6; color: var(--warning);

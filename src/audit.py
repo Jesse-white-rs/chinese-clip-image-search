@@ -47,7 +47,13 @@ _audit = logging.getLogger("audit")
 _audit.setLevel(logging.INFO)
 _audit.propagate = False          # 不冒泡到根 logger，避免写进业务日志
 if not _audit.handlers:
-    _audit.addHandler(_AuditLogger())
+    _handler = _AuditLogger()
+    # 与系统日志保持一致的带时间格式，前端靠 "｜ AUDIT ｜" 识别审计行着色
+    _handler.setFormatter(logging.Formatter(
+        '%(asctime)s ｜ AUDIT ｜ %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    ))
+    _audit.addHandler(_handler)
 
 
 def _fmt(kv: dict) -> str:
