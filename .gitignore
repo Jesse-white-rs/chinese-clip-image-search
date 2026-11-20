@@ -1,0 +1,43 @@
+# Python
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Node / 前端依赖与构建产物
+src/web/node_modules/
+src/web/dist/
+node_modules/
+
+# 前端构建产物（体积大，按需可自行构建）
+dist/
+
+# 模型权重（体积大，README 说明自动下载/离线放置）
+ai-model/
+*.pt
+*.pth
+*.onnx
+
+# 运行期数据与备份
+backups/
+logs/
+tmp/
+src/logs/
+src/tmp/
+data/
+
+# 本地上传临时图片
+src/models/
+
+# IDE / 系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 环境变量与密钥（如有）
+.env
+*.env
