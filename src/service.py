@@ -267,7 +267,7 @@ def _batch_block(table_name, block, model, milvus_cli, mysql_cli, minio_cli, aut
                 })
         if not mysql_cli.insert(table_name, rows):
             milvus_cli.delete_by_ids(table_name, primary_keys)
-            raise RuntimeError("映射记录批量写入失败")
+            raise RuntimeError(f"映射记录批量写入失败: {getattr(mysql_cli, 'last_error', '')}")
         if id_collector is not None:
             id_collector.extend(pairs)
         success = len(block)
@@ -337,10 +337,12 @@ def _write_one(table_name, image_bytes, model, milvus_cli, mysql_cli, minio_cli,
         )])
         if not ok:
             milvus_cli.delete_by_ids(table_name, [img_id])
+            db_err = getattr(mysql_cli, "last_error", "") or "映射记录写入失败"
+            msg = f"映射记录写入失败: {db_err}"
             audit.log_upload(table_name, source, raw_url, commodity_id, customs_param,
                              save_to_minio, None, object_name, False,
-                             int((time.perf_counter() - started) * 1000), "映射记录写入失败")
-            return None, "映射记录写入失败"
+                             int((time.perf_counter() - started) * 1000), msg)
+            return None, msg
         audit.log_upload(table_name, source, raw_url, commodity_id, customs_param,
                          save_to_minio, str(img_id), object_name, True,
                          int((time.perf_counter() - started) * 1000))

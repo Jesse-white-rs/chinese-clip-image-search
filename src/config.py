@@ -5,7 +5,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ############### Milvus 向量库配置 ###############
 # Milvus 服务地址与端口
-MILVUS_HOST = os.getenv("MILVUS_HOST", "192.168.1.10")
+MILVUS_HOST = os.getenv("MILVUS_HOST", "192.168.24.6")
 MILVUS_PORT = int(os.getenv("MILVUS_PORT", "19530"))
 # chinese-clip-rn50 的图文特征统一为 1024 维
 VECTOR_DIMENSION = int(os.getenv("VECTOR_DIMENSION", "1024"))
@@ -24,19 +24,22 @@ FLUSH_INTERVAL = float(os.getenv("FLUSH_INTERVAL", "2"))
 FLUSH_MODE = os.getenv("FLUSH_MODE", "async").lower()
 
 ############### MySQL 配置 ###############
-MYSQL_HOST = os.getenv("MYSQL_HOST", "192.168.1.10")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "192.168.24.6")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
 MYSQL_PWD = os.getenv("MYSQL_PWD", "请通过环境变量设置")
 MYSQL_DB = os.getenv("MYSQL_DB", "image_search")
-# 连接探活间隔（秒）：避免每次 SQL 都 ping，降低批量入库开销
+# 连接池：高并发写入时每线程独享连接，消除单连接排队与超时
+MYSQL_POOL_MIN = int(os.getenv("MYSQL_POOL_MIN", "2"))
+MYSQL_POOL_MAX = int(os.getenv("MYSQL_POOL_MAX", "20"))
+# 连接探活间隔（秒）：兼容旧配置（连接池用 ping 检查回收连接）
 MYSQL_PING_INTERVAL = int(os.getenv("MYSQL_PING_INTERVAL", "30"))
 
 ############### 数据路径 ###############
 UPLOAD_PATH = os.getenv("UPLOAD_PATH", "/data/default-pic-directory")
 
 ############### MinIO 对象存储配置 ###############
-MINIO_HOST = os.getenv("MINIO_HOST", "192.168.1.10")
+MINIO_HOST = os.getenv("MINIO_HOST", "192.168.24.6")
 MINIO_PORT = int(os.getenv("MINIO_PORT", "9000"))
 MINIO_ROOT_USER = os.getenv("MINIO_ROOT_USER", "minioadmin")
 MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")

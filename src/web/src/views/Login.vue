@@ -133,12 +133,12 @@ async function onLogin() {
   animation: orb-float 18s ease-in-out infinite alternate;
 }
 .orb-1 { width: 520px; height: 520px; top: -10%; left: 8%;
-  background: radial-gradient(circle, rgba(122,162,255,0.55), transparent 70%); }
+  background: radial-gradient(circle, rgba(90,158,140,0.38), transparent 70%); }
 .orb-2 { width: 460px; height: 460px; bottom: -5%; right: 5%;
-  background: radial-gradient(circle, rgba(167,139,250,0.48), transparent 70%);
+  background: radial-gradient(circle, rgba(127,186,168,0.30), transparent 70%);
   animation-delay: -6s; }
 .orb-3 { width: 380px; height: 380px; top: 40%; left: 55%;
-  background: radial-gradient(circle, rgba(94,234,212,0.28), transparent 70%);
+  background: radial-gradient(circle, rgba(63,119,104,0.28), transparent 70%);
   animation-delay: -12s; }
 @keyframes orb-float {
   0%   { transform: translate(0, 0) scale(1); }
@@ -166,8 +166,8 @@ async function onLogin() {
   display: grid; place-items: center;
   font-size: 30px; color: #fff;
   border-radius: 20px;
-  background: linear-gradient(140deg, rgba(122,162,255,0.95), rgba(167,139,250,0.85) 55%, rgba(94,234,212,0.75));
-  box-shadow: 0 12px 40px rgba(122,162,255,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+  background: linear-gradient(140deg, var(--aurora-1), var(--aurora-2) 55%, var(--aurora-3));
+  box-shadow: 0 12px 40px rgba(90,158,140,0.32), inset 0 1px 0 rgba(255,255,255,0.4);
   position: relative; z-index: 1;
 }
 .glyph-ring {
@@ -185,7 +185,7 @@ async function onLogin() {
   font-size: 26px;
   font-weight: 600;
   letter-spacing: 3px;
-  background: linear-gradient(120deg, #fff, #c7d4ff);
+  background: linear-gradient(120deg, #fff, #cfe8de);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -226,18 +226,18 @@ async function onLogin() {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   font-size: 15px; font-weight: 600; letter-spacing: 1px;
   color: #fff;
-  background: linear-gradient(110deg, #7aa2ff, #a78bfa 55%, #8ab4ff);
+  background: linear-gradient(110deg, var(--aurora-1), var(--aurora-2) 55%, var(--aurora-3));
   background-size: 200% 100%;
   border: 1px solid rgba(255,255,255,0.3);
   border-radius: var(--r-pill);
   cursor: pointer;
-  box-shadow: 0 10px 32px rgba(122,162,255,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 10px 32px rgba(90,158,140,0.28), inset 0 1px 0 rgba(255,255,255,0.4);
   transition: var(--t);
   animation: btn-shimmer 6s linear infinite;
 }
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 14px 44px rgba(122,162,255,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: 0 14px 44px rgba(90,158,140,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .login-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
 .login-btn:disabled { opacity: 0.7; cursor: wait; }

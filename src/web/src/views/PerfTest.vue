@@ -206,6 +206,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { perfApi, type PerfResult, type PerfProgress } from '@/api/perf'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
 import { searchApi } from '@/api/search'
 
 const scenarios = [
@@ -292,7 +295,7 @@ async function startTest() {
       current: 0, total: res.total, success: 0, failed: 0, status: 'running', message: '',
     }
     startPolling()
-  } catch (e: any) { alert(e.message) }
+  } catch (e: any) { toast.error(e.message || '启动压测失败') }
   finally { running.value = false }
 }
 
@@ -328,7 +331,7 @@ onUnmounted(() => clearInterval(timer))
 <style scoped>
 .head-hint { font-size: 12px; color: var(--text-3); }
 .perf-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; }
-.card { padding: 22px; }
+/* card 由 glass.css 统一提供 */
 .card-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; margin-bottom: 20px; }
 .title-icon { color: var(--accent); font-size: 17px; }
 
@@ -341,7 +344,7 @@ onUnmounted(() => clearInterval(timer))
   border-radius: var(--r-sm); cursor: pointer; transition: var(--t);
 }
 .scenario-btn:hover { background: rgba(255,255,255,0.07); }
-.scenario-btn.on { background: rgba(122,162,255,0.14); border-color: rgba(122,162,255,0.4); box-shadow: 0 0 18px rgba(122,162,255,0.12); }
+.scenario-btn.on { background: rgba(90,158,140,0.13); border-color: rgba(90,158,140,0.42); box-shadow: 0 0 18px rgba(90,158,140,0.10); }
 .sc-icon { grid-row: 1 / 3; display: grid; place-items: center; font-size: 18px; color: var(--accent); }
 .sc-name { font-size: 13px; font-weight: 500; color: var(--text-1); }
 .sc-desc { font-size: 11px; color: var(--text-3); }
@@ -354,7 +357,7 @@ onUnmounted(() => clearInterval(timer))
   border-radius: 8px; cursor: pointer; transition: var(--t);
 }
 .preset-btn:hover { background: rgba(255,255,255,0.08); }
-.preset-btn.on { color: #fff; background: rgba(122,162,255,0.2); border-color: rgba(122,162,255,0.45); }
+.preset-btn.on { color: #fff; background: rgba(90,158,140,0.22); border-color: rgba(90,158,140,0.5); }
 
 .range { width: 100%; accent-color: var(--accent); }
 .range-marks { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-top: 4px; }
@@ -388,7 +391,7 @@ onUnmounted(() => clearInterval(timer))
   background: rgba(255,255,255,0.03); border: 1px solid var(--glass-stroke);
   border-radius: var(--r-sm);
 }
-.metric.primary { background: linear-gradient(140deg, rgba(122,162,255,0.15), rgba(167,139,250,0.08)); border-color: rgba(122,162,255,0.3); }
+.metric.primary { background: linear-gradient(140deg, rgba(90,158,140,0.15), rgba(127,186,168,0.06)); border-color: rgba(90,158,140,0.32); }
 .metric-value { font-size: 24px; font-weight: 600; color: var(--accent); }
 .metric.primary .metric-value { font-size: 28px; }
 .metric-value small { font-size: 12px; margin-left: 2px; color: var(--text-2); }

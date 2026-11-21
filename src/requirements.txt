@@ -15,6 +15,7 @@ bcrypt>=3.2.0,<5
 
 # Database and storage
 pymysql>=1.0.0
+DBUtils>=3.0.0
 # 锁定 2.x：代码使用 ORM API（connections.connect/Collection/utility），
 # pymilvus 3.x 会把这些 API 标记为 deprecated 并疯狂报警告，且 3.1 将移除
 pymilvus>=2.3.0,<3.0.0

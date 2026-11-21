@@ -165,16 +165,9 @@ watch(table, () => { localStorage.setItem('currentTable', table.value) })
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-head h2 { margin: 0; font-size: 20px; }
 .head-tools { display: flex; gap: 10px; align-items: center; }
 .head-tools .select { width: 180px; }
-.card { padding: 18px; }
-.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
-.img-card { border: 1px solid var(--glass-border); border-radius: var(--radius-md); overflow: hidden; background: rgba(10,13,24,0.3); }
-.thumb { height: 140px; display: grid; place-items: center; background: rgba(10,13,24,0.5); cursor: pointer; overflow: hidden; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--transition); }
-.thumb:hover img { transform: scale(1.05); }
+/* card / img-grid / img-card / thumb 由 glass.css 统一提供 */
 .thumb-ph { color: var(--text-muted); font-size: 12px; display: grid; place-items: center; gap: 8px; }
 .img-meta { padding: 10px 12px; }
 .img-id { font-size: 12px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -190,6 +183,6 @@ watch(table, () => { localStorage.setItem('currentTable', table.value) })
 .clear-box { width: 440px; max-width: 92vw; padding: 24px; }
 .clear-box h3 { margin: 0 0 14px; font-size: 17px; }
 .warn-text { font-size: 13px; line-height: 1.7; color: var(--warning); margin: 0 0 20px; }
-.clear-box code { color: var(--accent); background: rgba(122,162,255,0.1); padding: 1px 6px; border-radius: 4px; }
+.clear-box code { color: var(--accent); background: rgba(90,158,140,0.14); padding: 1px 6px; border-radius: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 </style>

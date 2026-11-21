@@ -119,8 +119,7 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
-.page-head h2 { margin: 0; font-size: 20px; }
+.page-head { flex-wrap: wrap; gap: 12px; }
 .head-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .head-tools .select { width: auto; min-width: 110px; }
 .kw-input { width: 200px; font-size: 12px; padding: 7px 11px; }
@@ -139,11 +138,11 @@ onUnmounted(() => clearInterval(timer))
   border-radius: var(--radius-lg);
 }
 .log-line { color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; padding: 1px 0; }
-.log-line:hover { background: rgba(122,162,255,0.06); }
+.log-line:hover { background: rgba(90,158,140,0.08); }
 .lv-error { color: #f87171; }
 .lv-warn { color: #fbbf24; }
 .lv-info { color: #7dd3fc; }
 .lv-debug { color: #64748b; }
-.lv-audit { color: #a78bfa; }
+.lv-audit { color: var(--accent); }
 .log-foot { font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right; }
 </style>

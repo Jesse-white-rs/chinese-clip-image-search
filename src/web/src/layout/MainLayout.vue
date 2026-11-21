@@ -65,7 +65,11 @@
       </header>
 
       <main class="content">
-        <router-view />
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <Transition name="fade-slide" mode="out-in">
+            <component :is="Component" :key="currentRoute.path" />
+          </Transition>
+        </router-view>
       </main>
     </div>
   </div>
@@ -147,7 +151,7 @@ watch(() => route.fullPath, () => { loadTables() })
   display: grid; place-items: center; font-size: 24px; color: #fff;
   border-radius: 15px;
   background: linear-gradient(140deg, var(--aurora-1), var(--aurora-2) 60%, var(--aurora-3));
-  box-shadow: 0 8px 26px rgba(122,162,255,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 8px 26px rgba(90,158,140,0.28), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .brand-title { font-size: 16px; font-weight: 600; letter-spacing: 1px; }
 .brand-sub { font-size: 9px; letter-spacing: 2.5px; color: var(--text-3); margin-top: 3px; }
@@ -169,8 +173,8 @@ watch(() => route.fullPath, () => { loadTables() })
 .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text-1); }
 .nav-item.active {
   color: #fff;
-  background: linear-gradient(100deg, rgba(122,162,255,0.20), rgba(167,139,250,0.08));
-  box-shadow: inset 0 0 0 1px rgba(138,180,255,0.18), 0 4px 18px rgba(122,162,255,0.12);
+  background: linear-gradient(100deg, rgba(90,158,140,0.18), rgba(127,186,168,0.08));
+  box-shadow: inset 0 0 0 1px rgba(95,168,147,0.26), 0 4px 18px rgba(90,158,140,0.10);
 }
 .nav-icon { width: 22px; text-align: center; font-size: 17px; }
 .nav-indicator {
@@ -198,14 +202,14 @@ watch(() => route.fullPath, () => { loadTables() })
 .topbar-right { display: flex; align-items: center; gap: 18px; }
 .table-picker { display: flex; align-items: center; gap: 9px; }
 .picker-icon { color: var(--accent); font-size: 15px; }
-.picker-select { width: auto; min-width: 150px; padding: 8px 32px 8px 12px; font-size: 13px; }
+.picker-select { width: auto; min-width: 150px; padding: 8px 40px 8px 13px; font-size: 13px; }
 .topbar-divider { width: 1px; height: 26px; background: rgba(255,255,255,0.1); }
 .user-menu { display: flex; align-items: center; gap: 11px; }
 .avatar {
   width: 36px; height: 36px; display: grid; place-items: center;
   border-radius: 12px; font-size: 14px; font-weight: 600; color: #fff;
   background: linear-gradient(140deg, var(--aurora-2), var(--aurora-1));
-  box-shadow: 0 4px 16px rgba(167,139,250,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 4px 16px rgba(90,158,140,0.26), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .user-meta { display: flex; flex-direction: column; gap: 2px; }
 .username { font-size: 13px; font-weight: 500; }

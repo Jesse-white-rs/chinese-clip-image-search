@@ -164,7 +164,7 @@ async function copy(text: string, key: string) {
   transition: var(--t);
 }
 .nav-link:hover { background: rgba(255,255,255,0.06); color: var(--text-1); }
-.nav-link.active { background: rgba(122,162,255,0.15); color: #fff; }
+.nav-link.active { background: rgba(90,158,140,0.15); color: #fff; }
 .link-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .no-result { padding: 20px; text-align: center; color: var(--text-3); font-size: 12px; }
 
@@ -178,11 +178,11 @@ async function copy(text: string, key: string) {
   font-size: 16px; font-weight: 700; letter-spacing: 1px; color: #fff;
   border-radius: 18px;
   background: linear-gradient(140deg, var(--aurora-1), var(--aurora-2));
-  box-shadow: 0 8px 26px rgba(122,162,255,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 8px 26px rgba(90,158,140,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .intro-head h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; }
 .intro-head p { margin: 0; font-size: 13px; color: var(--text-2); }
-.intro-head code { color: var(--accent); background: rgba(122,162,255,0.1); padding: 2px 7px; border-radius: 5px; font-size: 12px; }
+.intro-head code { color: var(--accent); background: rgba(90,158,140,0.1); padding: 2px 7px; border-radius: 5px; font-size: 12px; }
 .auth-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .note { padding: 14px 16px; border-radius: var(--r-sm); border: 1px solid var(--glass-stroke); background: rgba(255,255,255,0.03); }
 .note-ok { border-left: 3px solid var(--success); }
@@ -193,7 +193,7 @@ async function copy(text: string, key: string) {
 
 .group-heading { font-size: 16px; font-weight: 600; margin: 28px 0 14px; padding-left: 4px; }
 .endpoint-card { padding: 22px 26px; margin-bottom: 16px; scroll-margin-top: 10px; transition: var(--t); }
-.endpoint-card.highlighted { border-color: rgba(122,162,255,0.4); box-shadow: var(--glass-shadow), 0 0 0 1px rgba(122,162,255,0.2); }
+.endpoint-card.highlighted { border-color: rgba(90,158,140,0.4); box-shadow: var(--glass-shadow), 0 0 0 1px rgba(90,158,140,0.2); }
 .ep-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .ep-path { font-size: 13px; color: var(--text-1); background: rgba(0,0,0,0.25); padding: 5px 10px; border-radius: 7px; }
 .ep-title { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
@@ -207,14 +207,14 @@ async function copy(text: string, key: string) {
 }
 .method-tag.lg { font-size: 11px; padding: 5px 10px; min-width: 58px; }
 .m-get { color: #5ee6a8; background: rgba(94,230,168,0.15); border: 1px solid rgba(94,230,168,0.3); }
-.m-post { color: #8ab4ff; background: rgba(122,162,255,0.15); border: 1px solid rgba(122,162,255,0.3); }
+.m-post { color: var(--accent); background: rgba(90,158,140,0.15); border: 1px solid rgba(90,158,140,0.3); }
 .m-put { color: #ffcc7a; background: rgba(255,204,122,0.15); border: 1px solid rgba(255,204,122,0.3); }
 .m-delete { color: #ff8095; background: rgba(255,128,149,0.15); border: 1px solid rgba(255,128,149,0.3); }
 
 .auth-badge { font-size: 11px; padding: 3px 10px; border-radius: var(--r-pill); border: 1px solid var(--glass-stroke); }
 .auth-公开 { color: var(--success); background: rgba(94,230,168,0.10); }
-.auth-登录 { color: var(--accent); background: rgba(122,162,255,0.10); }
-.auth-管理员 { color: var(--accent-2); background: rgba(167,139,250,0.10); }
+.auth-登录 { color: var(--accent); background: rgba(90,158,140,0.10); }
+.auth-管理员 { color: var(--accent-2); background: rgba(127,186,168,0.10); }
 
 .ep-section { margin-top: 16px; }
 .section-label { font-size: 11px; letter-spacing: 1px; color: var(--text-3); margin-bottom: 9px; text-transform: uppercase; }
@@ -241,7 +241,7 @@ async function copy(text: string, key: string) {
   border: 1px solid var(--glass-stroke); border-radius: 7px;
   cursor: pointer; transition: var(--t);
 }
-.copy-btn:hover { color: #fff; background: rgba(122,162,255,0.2); }
+.copy-btn:hover { color: #fff; background: rgba(90,158,140,0.2); }
 
 @media (max-width: 900px) {
   .docs-side { display: none; }

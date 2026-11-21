@@ -146,9 +146,6 @@ onMounted(load)
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-head h2 { margin: 0; font-size: 20px; }
-.card { padding: 18px; }
 .table td .btn { margin-right: 6px; }
 .muted { color: var(--text-muted); font-size: 12px; }
 .pager { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }

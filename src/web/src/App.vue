@@ -1,5 +1,6 @@
 <template>
   <router-view />
+  <ToastHost />
 </template>
 
 <script setup lang="ts">

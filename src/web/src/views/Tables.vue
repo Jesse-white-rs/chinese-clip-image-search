@@ -120,9 +120,6 @@ onMounted(load)
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-head h2 { margin: 0; font-size: 20px; }
-.card { padding: 18px; }
 .table-name { color: var(--accent); }
 .table td .btn { margin-right: 8px; }
 .modal-mask { position: fixed; inset: 0; background: rgba(3,7,15,0.7); display: grid; place-items: center; z-index: 50; backdrop-filter: blur(4px); }

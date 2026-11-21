@@ -269,7 +269,8 @@ $env:BACKUP_RETENTION_DAYS="30"
 | `FLUSH_MODE` | `async` | 单张上传 flush 模式：`async` 延迟批量 / `sync` 逐张立即 |
 | `FLUSH_THRESHOLD` | `100` | async 模式累计多少张触发一次 flush |
 | `FLUSH_INTERVAL` | `2` | async 模式最长多少秒触发一次 flush |
-| `MYSQL_PING_INTERVAL` | `30` | MySQL 探活间隔（秒） |
+| `MYSQL_POOL_MIN` / `MYSQL_POOL_MAX` | `2` / `20` | MySQL 连接池大小（每并发操作借独立连接） |
+| `MYSQL_PING_INTERVAL` | `30` | 兼容旧配置（连接池用 SELECT 1 探活） |
 | `JWT_SECRET` | 内置默认 | JWT 签名密钥，生产环境必须改 |
 | `ADMIN_USER` / `ADMIN_PASSWORD` | `admin` / 环境变量设置 | 初始管理员，务必通过环境变量设置密码 |
 | `LOG_RETENTION_DAYS` | `10` | 日志保留天数 |
@@ -415,6 +416,10 @@ image_search/
 11. **定时任务没执行**：确认任务启用、cron 正确；多 worker 时只有一个进程持锁，用「执行历史」确认。
 12. **备份文件很大**：300 万图片向量约 12GB，备份耗时较长；原图默认不打包。
 13. **循环调单张上传内存上涨**：已修复（pymilvus 重复 `connect()` 泄漏 gRPC 连接，现已加连接节流）。大批量入库建议改用批量接口或目录导入。
+14. **单张上传压测报"映射记录写入失败"、单张耗时几十秒**：已修复。原因是 MySQL 曾用单连接 + 全局锁，
+    高并发写入时排队超时。现已改为 DBUtils 连接池（`MYSQL_POOL_MAX` 默认 20），每操作借独立连接；
+    失败的具体错误（断连/唯一键冲突等）也会写进审计日志的 `error` 字段，不再只显示 `-`。
+    若仍报唯一键冲突，说明 `(raw_url, commodity_id)` 重复——压测请用随机值，或清理表后重跑。
 14. **性能压测**：后台「性能检测」页支持单张上传、批量上传、以图搜图、文本搜图四种场景，
     服务端执行，关闭页面不影响；上传场景按预计写入图片数提示。
     **批量上传压测**：`scenario=batch_upload`，`total` 为批数，`batch_size` 为每批张数（默认 500，可配），

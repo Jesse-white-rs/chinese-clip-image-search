@@ -313,18 +313,9 @@ onUnmounted(() => { clearInterval(taskTimer); clearInterval(dirTimer) })
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.page-head h2 { margin: 0; font-size: 20px; }
-.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
-.tab { padding: 9px 18px; font-size: 13px; color: var(--text-secondary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
-.tab:hover { color: var(--text-primary); }
-.tab.active { color: #fff; background: rgba(122,162,255,0.15); border-color: var(--glass-border-hover); }
-.card { padding: 22px; }
+/* tabs / tab / card / seg / seg-btn 由 glass.css 统一提供 */
 .form-grid { max-width: 560px; }
-.seg { display: inline-flex; padding: 3px; background: rgba(10,13,24,0.6); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); }
-.seg-btn { padding: 6px 14px; font-size: 13px; color: var(--text-secondary); background: transparent; border: none; border-radius: 6px; cursor: pointer; }
-.seg-btn.on { color: #fff; background: rgba(122,162,255,0.25); }
-.check { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+.check { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-2); cursor: pointer; }
 .check input { accent-color: var(--accent); }
 .result-msg { margin-top: 14px; font-size: 13px; color: var(--success); }
 .result-msg.err { color: var(--danger); }

@@ -43,7 +43,7 @@
       <div class="section-title" v-if="searched">检索结果（{{ results.length }}）</div>
       <div v-if="searched" class="glass-panel card">
         <div v-if="results.length === 0" class="empty">没有找到相似图片</div>
-        <div v-else class="img-grid">
+        <div v-else class="img-grid stagger">
           <div v-for="(r, i) in results" :key="r.imgId + i" class="img-card" @click="preview(r)">
             <div class="thumb">
               <img v-if="urls[r.imgId]" :src="urls[r.imgId]" :alt="r.imgId" />
@@ -135,33 +135,26 @@ onMounted(loadTables)
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.page-head h2 { margin: 0; font-size: 20px; }
-.search-panel { padding: 20px; }
-.tabs { display: flex; gap: 4px; margin-bottom: 18px; }
-.tab { padding: 9px 18px; font-size: 13px; color: var(--text-secondary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
-.tab.active { color: #fff; background: rgba(122,162,255,0.15); border-color: var(--glass-border-hover); }
+/* 公共类（page-head / section-title / card / tabs / tab / seg / seg-btn /
+   range / img-grid / img-card / thumb / img-meta / img-sub）现由 glass.css 统一提供 */
+
+.search-panel { padding: 22px; }
 .search-form { margin-bottom: 16px; }
-.seg { display: inline-flex; padding: 3px; background: rgba(10,13,24,0.6); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); margin-bottom: 12px; }
-.seg-btn { padding: 6px 14px; font-size: 13px; color: var(--text-secondary); background: transparent; border: none; border-radius: 6px; cursor: pointer; }
-.seg-btn.on { color: #fff; background: rgba(122,162,255,0.25); }
 .search-opts { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .topk { flex: 1; max-width: 320px; }
-.range { width: 100%; accent-color: var(--accent); }
-.section-title { font-size: 13px; color: var(--text-secondary); margin: 20px 0 12px; }
-.card { padding: 18px; }
-.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
-.img-card { border: 1px solid var(--glass-border); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: all var(--transition); background: rgba(10,13,24,0.3); }
-.img-card:hover { border-color: var(--glass-border-hover); transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
-.thumb { height: 150px; display: grid; place-items: center; background: rgba(10,13,24,0.5); position: relative; overflow: hidden; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; }
-.thumb-ph { color: var(--text-muted); font-size: 12px; }
-.rank { position: absolute; top: 8px; left: 8px; padding: 2px 8px; font-size: 11px; color: #fff; background: rgba(122,162,255,0.85); border-radius: 999px; }
-.img-meta { padding: 10px 12px; }
-.sim-row { display: flex; align-items: baseline; gap: 6px; }
-.sim-value { font-size: 18px; font-weight: 600; color: var(--accent); }
-.sim-label { font-size: 11px; color: var(--text-muted); }
-.img-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank {
+  position: absolute; top: 9px; left: 9px; z-index: 1;
+  padding: 3px 9px; font-size: 11px; font-weight: 600; color: #fff;
+  background: linear-gradient(120deg, var(--aurora-1), var(--aurora-3));
+  border-radius: var(--r-pill); box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+}
+.sim-row { display: flex; align-items: baseline; gap: 7px; }
+.sim-value {
+  font-size: 19px; font-weight: 700;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sim-label { font-size: 11px; color: var(--text-3); }
 .modal-mask { position: fixed; inset: 0; background: rgba(3,7,15,0.75); display: grid; place-items: center; z-index: 50; backdrop-filter: blur(4px); }
 .preview-box { width: 80vw; max-width: 900px; padding: 16px; }
 .preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }

@@ -118,6 +118,9 @@
 import { ref, onMounted } from 'vue'
 import { backupApi, type BackupTask, type BackupHistory, type BackupFile } from '@/api/backup'
 import { searchApi } from '@/api/search'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
 
 const active = ref<'tasks' | 'history' | 'files'>('tasks')
 const tasks = ref<BackupTask[]>([])
@@ -193,8 +196,10 @@ async function saveTask() {
     } else {
       await backupApi.createTask(form.value)
     }
+    const wasEdit = !!editing.value
     closeModal()
     await loadTasks()
+    toast.success(wasEdit ? '任务已更新' : '任务已创建')
   } catch (e: any) { err.value = e.message }
   finally { saving.value = false }
 }
@@ -203,33 +208,28 @@ async function toggle(t: BackupTask) {
   try { await backupApi.updateTask(t.id, { enabled: !t.enabled }); await loadTasks() } catch { /* ignore */ }
 }
 async function runNow(t: BackupTask) {
-  try { await backupApi.runNow(t.id); alert('备份任务已启动，请稍后刷新「执行历史」查看结果') } catch (e: any) { alert(e.message) }
+  try { await backupApi.runNow(t.id); toast.info('备份任务已启动，可在「执行历史」查看结果') } catch (e: any) { toast.error(e.message) }
 }
 async function deleteTask(t: BackupTask) {
   if (!confirm(`确定删除备份任务「${t.name}」？`)) return
-  try { await backupApi.deleteTask(t.id); await loadTasks() } catch { /* ignore */ }
+  try { await backupApi.deleteTask(t.id); await loadTasks(); toast.success('任务已删除') } catch (e: any) { toast.error(e.message) }
 }
 async function deleteFile(name: string) {
   if (!confirm(`确定删除备份文件「${name}」？`)) return
-  try { await backupApi.deleteFile(name); await loadFiles() } catch { /* ignore */ }
+  try { await backupApi.deleteFile(name); await loadFiles(); toast.success('备份文件已删除') } catch (e: any) { toast.error(e.message) }
 }
 async function download(name: string) {
-  try { await backupApi.download(name) } catch (e: any) { alert(e.message) }
+  try { await backupApi.download(name); toast.success('下载已开始') } catch (e: any) { toast.error(e.message) }
 }
 
 onMounted(async () => { await loadTables(); await loadTasks() })
 </script>
 
 <style scoped>
-.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-head h2 { margin: 0; font-size: 20px; }
-.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
-.tab { padding: 9px 18px; font-size: 13px; color: var(--text-secondary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
-.tab.active { color: #fff; background: rgba(122,162,255,0.15); border-color: var(--glass-border-hover); }
-.card { padding: 18px; }
+/* tabs / tab / card 由 glass.css 统一提供 */
 .table td .btn { margin-right: 6px; }
 .accent-text { color: var(--accent); }
-.cron { font-size: 12px; color: var(--accent-2); background: rgba(167,139,250,0.1); padding: 2px 6px; border-radius: 4px; }
+.cron { font-size: 12px; color: var(--accent); background: rgba(90,158,140,0.14); padding: 2px 6px; border-radius: 4px; }
 .muted { color: var(--text-muted); font-size: 12px; }
 .small { font-size: 11px; }
 .msg-cell { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
