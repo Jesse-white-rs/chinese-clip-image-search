@@ -13,9 +13,9 @@ PORT="5000"
 WORKERS="4"                        # uvicorn worker 数：每个进程各加载 1 份模型，按 CPU 核数/内存调整
 
 # 依赖服务地址与凭据：优先读环境变量，未设置时用占位符，请按实际情况修改
-MILVUS_HOST="${MILVUS_HOST:-192.168.1.10}"
-MYSQL_HOST="${MYSQL_HOST:-192.168.1.10}"
-MINIO_HOST="${MINIO_HOST:-192.168.1.10}"
+MILVUS_HOST="${MILVUS_HOST:-192.168.255.141}"
+MYSQL_HOST="${MYSQL_HOST:-192.168.255.141}"
+MINIO_HOST="${MINIO_HOST:-192.168.255.141}"
 MYSQL_PWD="${MYSQL_PWD:-请修改为MySQL密码}"
 
 echo "========== 图搜接口服务快速启动 =========="

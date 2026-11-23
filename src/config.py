@@ -5,7 +5,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ############### Milvus 向量库配置 ###############
 # Milvus 服务地址与端口
-MILVUS_HOST = os.getenv("MILVUS_HOST", "192.168.24.6")
+MILVUS_HOST = os.getenv("MILVUS_HOST", "192.168.255.141")
 MILVUS_PORT = int(os.getenv("MILVUS_PORT", "19530"))
 # chinese-clip-rn50 的图文特征统一为 1024 维
 VECTOR_DIMENSION = int(os.getenv("VECTOR_DIMENSION", "1024"))
@@ -24,10 +24,12 @@ FLUSH_INTERVAL = float(os.getenv("FLUSH_INTERVAL", "2"))
 FLUSH_MODE = os.getenv("FLUSH_MODE", "async").lower()
 
 ############### MySQL 配置 ###############
-MYSQL_HOST = os.getenv("MYSQL_HOST", "192.168.24.6")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "192.168.255.141")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
-MYSQL_PWD = os.getenv("MYSQL_PWD", "请通过环境变量设置")
+# 默认值为 ASCII 占位符：pymysql 用 latin-1 编码密码，中文字符会导致 UnicodeEncodeError。
+# 本地/服务器务必通过环境变量 MYSQL_PWD 设置真实密码。
+MYSQL_PWD = os.getenv("MYSQL_PWD", "194044")
 MYSQL_DB = os.getenv("MYSQL_DB", "image_search")
 # 连接池：高并发写入时每线程独享连接，消除单连接排队与超时
 MYSQL_POOL_MIN = int(os.getenv("MYSQL_POOL_MIN", "2"))
@@ -39,7 +41,7 @@ MYSQL_PING_INTERVAL = int(os.getenv("MYSQL_PING_INTERVAL", "30"))
 UPLOAD_PATH = os.getenv("UPLOAD_PATH", "/data/default-pic-directory")
 
 ############### MinIO 对象存储配置 ###############
-MINIO_HOST = os.getenv("MINIO_HOST", "192.168.24.6")
+MINIO_HOST = os.getenv("MINIO_HOST", "192.168.255.141")
 MINIO_PORT = int(os.getenv("MINIO_PORT", "9000"))
 MINIO_ROOT_USER = os.getenv("MINIO_ROOT_USER", "minioadmin")
 MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
@@ -73,7 +75,7 @@ JWT_ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = int(os.getenv("TOKEN_EXPIRE_DAYS", "7"))
 # 首次启动自动创建的管理员账号（避免默认弱口令，务必用环境变量覆盖）
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "请通过环境变量设置")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123456")")
 
 ############### 日志配置 ###############
 # 日志文件按天切割，默认仅保留最近 10 天

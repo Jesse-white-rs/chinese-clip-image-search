@@ -72,14 +72,23 @@
             </div>
           </div>
 
-          <!-- 请求示例 -->
-          <div v-if="ep.request" class="ep-section">
-            <div class="section-label">请求示例</div>
+          <!-- 请求示例（cURL / Python / Java 三语言切换） -->
+          <div class="ep-section">
+            <div class="code-head">
+              <div class="section-label">请求示例</div>
+              <div class="lang-tabs">
+                <button v-for="lang in CODE_LANGS" :key="lang.value"
+                        class="lang-tab" :class="{ on: langOf(ep.id) === lang.value }"
+                        @click="setLang(ep.id, lang.value)">
+                  {{ lang.label }}
+                </button>
+              </div>
+            </div>
             <div class="code-block">
-              <button class="copy-btn" @click="copy(ep.request!, ep.id + '-req')">
+              <button class="copy-btn" @click="copy(currentExample(ep), ep.id + '-req')">
                 {{ copied === ep.id + '-req' ? '已复制' : '复制' }}
               </button>
-              <pre>{{ ep.request }}</pre>
+              <pre>{{ currentExample(ep) }}</pre>
             </div>
           </div>
 
@@ -101,13 +110,24 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ENDPOINTS, GROUPS, AUTH_NOTES, BASE_URL, type ApiEndpoint } from '@/data/apiDocs'
+import {
+  ENDPOINTS, GROUPS, AUTH_NOTES, BASE_URL, CODE_LANGS, getExamples,
+  type ApiEndpoint, type CodeLang,
+} from '@/data/apiDocs'
 
 const keyword = ref('')
 const activeId = ref('auth-login')
 const copied = ref('')
 const notes = AUTH_NOTES
 const baseUrl = BASE_URL
+
+// 每个接口当前选中的代码语言（默认 cURL）
+const langMap = ref<Record<string, CodeLang>>({})
+function langOf(id: string): CodeLang { return langMap.value[id] || 'curl' }
+function setLang(id: string, lang: CodeLang) { langMap.value[id] = lang }
+function currentExample(ep: ApiEndpoint): string {
+  return getExamples(ep)[langOf(ep.id)]
+}
 
 const filtered = computed(() => {
   const kw = keyword.value.trim().toLowerCase()
@@ -232,8 +252,18 @@ async function copy(text: string, key: string) {
 .p-req.required { color: var(--danger); }
 .p-desc { color: var(--text-2); }
 
+.code-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.code-head .section-label { margin-bottom: 0; }
+.lang-tabs { display: inline-flex; gap: 3px; padding: 3px; background: rgba(10,13,24,0.5); border: 1px solid var(--glass-stroke); border-radius: var(--r-pill); }
+.lang-tab {
+  padding: 4px 12px; font-size: 11px; color: var(--text-3);
+  background: transparent; border: none; border-radius: var(--r-pill);
+  cursor: pointer; transition: var(--t);
+}
+.lang-tab:hover { color: var(--text-1); }
+.lang-tab.on { color: #fff; background: rgba(90,158,140,0.24); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
 .code-block { position: relative; background: rgba(4,6,14,0.6); border: 1px solid var(--glass-stroke); border-radius: var(--r-sm); padding: 14px 16px; }
-.code-block pre { margin: 0; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px; line-height: 1.6; color: #c8d3f5; white-space: pre-wrap; word-break: break-word; }
+.code-block pre { margin: 0; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px; line-height: 1.6; color: #c8d3f5; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto; }
 .copy-btn {
   position: absolute; top: 8px; right: 8px;
   font-size: 11px; padding: 4px 10px;
